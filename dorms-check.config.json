@@ -1,0 +1,15 @@
+{
+  "app": {
+    "name": "경제수학 용어사전 수행평가",
+    "url": "https://wbt1701.github.io/econ-math-glossary/",
+    "stack": "정적 HTML"
+  },
+  "tracks": [
+    "security"
+  ],
+  "edzipCase": null,
+  "teacher": {
+    "dormsHandle": ""
+  },
+  "ownershipConfirmed": true
+}
