@@ -1,0 +1,7 @@
+CLAUDE.md
+.env*
+.vercel/
+node_modules/
+*.local.*
+dorms-check.local.*
+.dorms-check/

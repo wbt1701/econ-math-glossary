@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>경제수학 용어사전 수행평가</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/mathlive@0.98.6/dist/mathlive-static.css" rel="stylesheet" />
+  <link href="css/style.css?v=1" rel="stylesheet" />
+</head>
+<body>
+  <a class="skip" href="#main">본문으로 건너뛰기</a>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">Σ</span>
+      <div>
+        <div class="brand-title">내가 만드는 경제수학 용어사전</div>
+        <div class="brand-sub">수행평가 답안 작성</div>
+      </div>
+    </div>
+    <div class="topbar-right" id="topbar-right"></div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- ============================== 첫 화면 ============================== -->
+    <section id="view-entry" class="view" hidden>
+      <div class="hero">
+        <h1>내가 만드는 <span class="accent">경제수학 용어사전</span></h1>
+        <p>생각열기와 용어사전 3개를 한 장으로 쭉 작성합니다. 글은 모두 직접 입력해야 하며, 쓰는 동안 자동으로 저장됩니다.</p>
+        <div class="window-chip" id="entry-window" role="status">접속 시간을 확인하는 중…</div>
+      </div>
+      <div class="entry-grid">
+        <form class="card entry-card" id="form-student" autocomplete="off" novalidate>
+          <h2>학생 입장</h2>
+          <p class="muted">학번 5자리와 이름을 입력하세요. 다시 들어올 때도 같은 학번·이름을 쓰면 이어서 작성할 수 있어요.</p>
+          <label class="field">
+            <span>학번</span>
+            <input id="in-sid" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="예: 10101" required />
+          </label>
+          <label class="field">
+            <span>이름</span>
+            <input id="in-name" maxlength="20" placeholder="예: 홍길동" required />
+          </label>
+          <p class="form-error" id="err-student" role="alert"></p>
+          <button class="btn btn-primary btn-block" type="submit">입장하기</button>
+        </form>
+        <form class="card entry-card teacher-entry" id="form-teacher" autocomplete="off" novalidate>
+          <h2>교사</h2>
+          <p class="muted">비밀번호로 접속하면 접속 시간 설정, 답안 확인, PDF 저장을 할 수 있어요.</p>
+          <label class="field">
+            <span>비밀번호</span>
+            <input id="in-pw" type="password" inputmode="numeric" maxlength="40" autocomplete="current-password" required />
+          </label>
+          <p class="form-error" id="err-teacher" role="alert"></p>
+          <button class="btn btn-ghost btn-block" type="submit">교사로 접속</button>
+        </form>
+        <div class="card entry-card guide-card">
+          <h2>작성 안내</h2>
+          <ol class="guide-list">
+            <li><b>생각열기</b> — 네컷만화(사진 첨부) 또는 줄글 중 선택, 배운 용어 3개 이상 사용</li>
+            <li><b>용어사전</b> — 용어 3개마다 ① 정확한 의미 ② 수학적 표현 및 설명 ③ 상황 적용</li>
+            <li><b>수식·표</b> — 입력칸 위의 <span class="kbd">∑ 수식</span>, <span class="kbd">▦ 표</span> 버튼 사용</li>
+            <li>복사·붙여넣기는 막혀 있어요. 모든 글은 직접 입력합니다.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== 학생 화면 ============================== -->
+    <section id="view-student" class="view" hidden>
+      <div class="statusbar" id="student-status">
+        <div class="who" id="st-who"></div>
+        <div class="status-items">
+          <span class="save-state" id="st-save" role="status" aria-live="polite">저장됨</span>
+          <span class="st-meta" id="st-last"></span>
+          <span class="st-meta" id="st-deadline"></span>
+        </div>
+        <button class="btn btn-small btn-ghost" id="btn-student-exit" type="button">나가기</button>
+      </div>
+      <div class="closed-banner" id="st-closed" hidden role="alert">마감 시간이 지나 더 이상 저장되지 않습니다. 작성한 내용은 마지막 저장 시점까지 보관됩니다.</div>
+
+      <article class="sheet-form">
+        <header class="sheet-head">
+          <h1>내가 만드는 경제수학 용어사전</h1>
+          <div class="sheet-who" id="sheet-who"></div>
+        </header>
+
+        <section class="band-section">
+          <h2 class="band">(1) 생각열기 : 나의 경제 상황 <small>방법 ① 네컷만화 또는 방법 ② 줄글 중 선택 / 배운 용어 3개 이상에 밑줄</small></h2>
+          <div class="band-body">
+            <div class="method-tabs" role="radiogroup" aria-label="생각열기 방법">
+              <button type="button" class="method-tab" role="radio" data-method="cartoon">방법 ① 네컷만화</button>
+              <button type="button" class="method-tab" role="radio" data-method="writing">방법 ② 줄글</button>
+            </div>
+            <div id="method-cartoon" class="method-pane" hidden>
+              <p class="muted">직접 그린 네컷만화를 사진으로 찍어 올려 주세요(최대 4장). 아래 칸에는 만화의 상황을 간단히 설명하세요.</p>
+              <div class="photo-grid" id="photo-grid"></div>
+              <label class="btn btn-ghost upload-btn" id="upload-label">
+                <input type="file" id="in-photo" accept="image/*" hidden />
+                <span>＋ 사진 올리기</span>
+              </label>
+              <div class="editor-label">만화 설명</div>
+              <div class="rte-slot" data-field="thinking.cartoonText" data-placeholder="예: [학교 앞 분식집의 떡볶이 가격 인상] 재료값이 올라 공급곡선이 이동하고…"></div>
+            </div>
+            <div id="method-writing" class="method-pane" hidden>
+              <div class="rte-slot" data-field="thinking.writing" data-placeholder="제목을 쓰고, 나의 경제 상황을 2문장 이상으로 써 보세요. 배운 용어에는 밑줄(U)을 그어 주세요."></div>
+            </div>
+            <div class="method-empty" id="method-empty">위에서 작성 방법을 먼저 골라 주세요.</div>
+            <fieldset class="selfcheck">
+              <legend>나의 점검</legend>
+              <label><input type="checkbox" data-check="terms" /> 배운 용어 3개 이상 포함</label>
+              <label><input type="checkbox" data-check="vars" /> 대상과 변수(가격·판매량 등)가 분명함</label>
+              <label><input type="checkbox" data-check="form" /> 네컷 또는 2문장 이상으로 완성</label>
+            </fieldset>
+          </div>
+        </section>
+
+        <section class="band-section">
+          <h2 class="band">(2) 용어사전</h2>
+          <div id="terms"></div>
+        </section>
+
+        <p class="sheet-foot muted">작성 내용은 입력을 멈추고 2초 뒤 자동 저장됩니다. 마지막 저장 시각은 화면 위에서 확인하세요.</p>
+      </article>
+    </section>
+
+    <!-- ============================== 교사 화면 ============================== -->
+    <section id="view-teacher" class="view" hidden>
+      <div class="dash-head">
+        <div>
+          <h1>교사 대시보드</h1>
+          <p class="muted" id="t-refreshed"></p>
+        </div>
+        <div class="dash-actions">
+          <button class="btn btn-ghost btn-small" type="button" id="btn-t-refresh">새로고침</button>
+          <button class="btn btn-ghost btn-small" type="button" id="btn-t-logout">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><div class="tile-label">접속 상태</div><div class="tile-value" id="tile-open">-</div><div class="tile-sub" id="tile-open-sub"></div></div>
+        <div class="tile"><div class="tile-label">입장한 학생</div><div class="tile-value" id="tile-count">0</div><div class="tile-sub">명</div></div>
+        <div class="tile"><div class="tile-label">최근 10분 안에 수정</div><div class="tile-value" id="tile-active">0</div><div class="tile-sub">명</div></div>
+        <div class="tile"><div class="tile-label">모든 칸 작성</div><div class="tile-value" id="tile-done">0</div><div class="tile-sub">명</div></div>
+      </div>
+
+      <div class="card">
+        <h2>접속 가능 시간</h2>
+        <p class="muted">학생은 시작 시각부터 마감 시각 전까지만 입장하고 저장할 수 있어요. 마감이 지나면 작성 중이던 화면도 저장이 멈춥니다.</p>
+        <form class="window-form" id="form-window">
+          <label class="field"><span>시작</span><input type="datetime-local" id="in-open" required /></label>
+          <label class="field"><span>마감</span><input type="datetime-local" id="in-close" required /></label>
+          <div class="window-buttons">
+            <button class="btn btn-primary" type="submit">저장</button>
+            <button class="btn btn-ghost" type="button" id="btn-now50">지금부터 50분</button>
+            <button class="btn btn-ghost btn-danger-text" type="button" id="btn-close-now">지금 마감</button>
+          </div>
+          <p class="form-error" id="err-window" role="alert"></p>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="list-head">
+          <h2>학생 답안</h2>
+          <div class="list-tools">
+            <label class="field inline"><span>반</span><select id="sel-class"><option value="">전체</option></select></label>
+            <label class="field inline"><span>검색</span><input id="in-search" placeholder="학번 또는 이름" /></label>
+            <button class="btn btn-primary btn-small" type="button" id="btn-zip">보이는 학생 PDF 한 파일로</button>
+          </div>
+        </div>
+        <div class="zip-progress" id="zip-progress" hidden></div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>학번</th><th>이름</th><th>생각열기</th><th>용어①</th><th>용어②</th><th>용어③</th><th>마지막 수정</th><th><span class="sr">작업</span></th></tr>
+            </thead>
+            <tbody id="t-rows"></tbody>
+          </table>
+        </div>
+        <p class="empty" id="t-empty" hidden>아직 입장한 학생이 없어요. 접속 시간을 설정한 뒤 학생들에게 이 주소를 알려 주세요.</p>
+      </div>
+    </section>
+
+    <section id="view-error" class="view" hidden>
+      <div class="card error-card">
+        <h1>앱을 열 수 없어요</h1>
+        <p id="fatal-msg"></p>
+        <button class="btn btn-primary" type="button" onclick="location.reload()">다시 시도</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 수식 입력 -->
+  <dialog id="dlg-math" class="dlg" aria-labelledby="dlg-math-title">
+    <form method="dialog" class="dlg-inner">
+      <h2 id="dlg-math-title">수식 입력</h2>
+      <p class="muted small">키보드로 바로 입력하거나 아래 버튼을 누르세요. 예: <code>a/b</code> → 분수, <code>x^2</code> → 거듭제곱, <code>a_1</code> → 아래첨자</p>
+      <div class="math-shell"><math-field id="mf" math-virtual-keyboard-policy="manual"></math-field></div>
+      <div class="math-palette" id="math-palette"></div>
+      <div class="dlg-actions">
+        <button class="btn btn-ghost btn-danger-text" type="button" id="btn-math-delete" hidden>수식 지우기</button>
+        <span class="grow"></span>
+        <button class="btn btn-ghost" type="button" id="btn-math-kbd">⌨ 수식 키보드</button>
+        <button class="btn btn-ghost" value="cancel" type="submit">취소</button>
+        <button class="btn btn-primary" type="button" id="btn-math-ok">넣기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 표 입력 -->
+  <dialog id="dlg-table" class="dlg" aria-labelledby="dlg-table-title">
+    <form method="dialog" class="dlg-inner">
+      <h2 id="dlg-table-title">표 넣기</h2>
+      <p class="muted small">칸을 눌러 크기를 고르세요. 넣은 뒤에도 표 안을 누르면 행·열을 더하거나 뺄 수 있어요.</p>
+      <div class="table-picker" id="table-picker" role="grid" aria-label="표 크기 고르기"></div>
+      <div class="table-size" id="table-size">3 × 3</div>
+      <label class="check-inline"><input type="checkbox" id="chk-thead" checked /> 첫 줄을 제목 줄로</label>
+      <div class="dlg-actions">
+        <span class="grow"></span>
+        <button class="btn btn-ghost" value="cancel" type="submit">취소</button>
+        <button class="btn btn-primary" type="button" id="btn-table-ok">넣기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 학생 답안 보기 -->
+  <dialog id="dlg-view" class="dlg dlg-wide" aria-labelledby="dlg-view-title">
+    <div class="dlg-inner">
+      <div class="dlg-bar">
+        <h2 id="dlg-view-title">답안 보기</h2>
+        <span class="grow"></span>
+        <button class="btn btn-primary btn-small" type="button" id="btn-view-pdf">PDF로 저장</button>
+        <button class="btn btn-ghost btn-small btn-danger-text" type="button" id="btn-view-delete">기록 삭제</button>
+        <button class="btn btn-ghost btn-small" type="button" id="btn-view-close">닫기</button>
+      </div>
+      <div class="view-scroll" id="view-body"></div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathlive@0.98.6/dist/mathlive.min.js"></script>
+  <script src="config.js?v=1"></script>
+  <script src="js/editor.js?v=1"></script>
+  <script src="js/sheet.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>
