@@ -53,6 +53,16 @@
       el.removeAttribute("aria-label");
     });
     copy.querySelectorAll(".cell-active").forEach((el) => el.classList.remove("cell-active"));
+    // 서식 켜기/끄기에 쓰는 보이지 않는 글자(​)와 빈 서식 덩어리를 지운다
+    const walker = document.createTreeWalker(copy, NodeFilter.SHOW_TEXT);
+    const texts = [];
+    while (walker.nextNode()) texts.push(walker.currentNode);
+    texts.forEach((t) => {
+      if (t.nodeValue.includes("​")) t.nodeValue = t.nodeValue.replace(/​/g, "");
+    });
+    copy.querySelectorAll("span.em, span.hl, b, strong, u").forEach((el) => {
+      if (!el.textContent && !el.querySelector(".math, br, table")) el.remove();
+    });
     const html = Ed.sanitize(copy.innerHTML);
     return Ed.textOf(html) || /class="math"/.test(html) || /<table/.test(html) ? html : "";
   };
@@ -185,12 +195,31 @@
       });
       pal.append(b);
     });
-    document.getElementById("btn-math-kbd").addEventListener("click", () => {
-      const kb = window.mathVirtualKeyboard;
+    // 수식 키보드는 기본으로 화면 맨 아래(body)에 떠서 대화상자 뒤에 가려진다
+    // → 대화상자 안, 입력칸 바로 아래 칸(#mf-kbd)에 띄운다
+    const kb = window.mathVirtualKeyboard;
+    const kbBox = document.getElementById("mf-kbd");
+    const kbBtn = document.getElementById("btn-math-kbd");
+    const fitToKeyboard = (on) => {
+      dlg.classList.toggle("kbd-open", !!on);
+      kbBox.hidden = !on;
+      kbBtn.textContent = on ? "⌨ 키보드 닫기" : "⌨ 수식 키보드";
+      kbBtn.setAttribute("aria-pressed", String(!!on));
+    };
+    kbBtn.addEventListener("click", () => {
       if (!kb) return;
+      if (dlg.classList.contains("kbd-open")) {
+        kb.hide();
+        fitToKeyboard(false);
+      } else {
+        fitToKeyboard(true);
+        try {
+          kb.container = kbBox;
+        } catch (e) {}
+        mf.focus();
+        kb.show();
+      }
       mf.focus();
-      if (kb.visible) kb.hide();
-      else kb.show();
     });
     document.getElementById("btn-math-ok").addEventListener("click", () => {
       const latex = (mf.value || "").trim();
@@ -209,7 +238,13 @@
       closeMath();
     });
     dlg.addEventListener("close", () => {
-      if (window.mathVirtualKeyboard) window.mathVirtualKeyboard.hide();
+      if (kb) {
+        kb.hide();
+        try {
+          kb.container = document.body;
+        } catch (e) {}
+      }
+      fitToKeyboard(false);
       mathCtx = null;
     });
   }
@@ -313,12 +348,16 @@
         return b;
       };
       const sep = () => Object.assign(document.createElement("span"), { className: "sep" });
+      // 한글(HWP)처럼 한 번 누르면 켜지고, 다시 누르면 꺼진다(켜진 버튼은 파랗게 표시)
+      this.fmtBtns = {
+        bold: add("<b>B</b>", "굵게 (켜기/끄기, Ctrl+B)", () => this.exec("bold"), "tb-fmt"),
+        underline: add("<u>U</u>", "밑줄 — 배운 용어 표시 (켜기/끄기, Ctrl+U)", () => this.exec("underline"), "tb-fmt"),
+        em: add('<span style="color:#c0392b">가</span>', "빨간 글씨 (켜기/끄기)", () => this.toggleSpan("em"), "tb-fmt"),
+        hl: add('<span style="background:#E9D8A6;padding:0 3px;border-radius:3px">가</span>', "형광펜 (켜기/끄기)", () => this.toggleSpan("hl"), "tb-fmt"),
+      };
+      Object.values(this.fmtBtns).forEach((b) => b.setAttribute("aria-pressed", "false"));
       this.toolbar.append(
-        add("<b>B</b>", "굵게", () => this.exec("bold")),
-        add("<u>U</u>", "밑줄(배운 용어 표시)", () => this.exec("underline")),
-        add('<span style="color:#c0392b">가</span>', "빨간 강조", () => this.wrap("em")),
-        add('<span style="background:#E9D8A6;padding:0 3px;border-radius:3px">가</span>', "형광펜", () => this.wrap("hl")),
-        add("⌫서식", "서식 지우기", () => this.clearFormat()),
+        ...Object.values(this.fmtBtns),
         sep(),
         add("∑ 수식", "수식 넣기", () => this.openMath(null), "tb-math"),
         add("▦ 표", "표 넣기", () => this.openTable(), "tb-table")
@@ -340,9 +379,13 @@
       this.body.addEventListener("input", () => this.changed());
       const remember = () => {
         const sel = window.getSelection();
-        if (sel.rangeCount && this.body.contains(sel.anchorNode)) this.lastRange = sel.getRangeAt(0).cloneRange();
+        if (sel.rangeCount && this.body.contains(sel.anchorNode)) {
+          this.lastRange = sel.getRangeAt(0).cloneRange();
+          this.updateFormatState();
+        }
         this.updateTableState();
       };
+      this.body.addEventListener("keyup", () => this.updateFormatState());
       document.addEventListener("selectionchange", remember);
       this.body.addEventListener("click", (e) => {
         const m = e.target.closest(".math");
@@ -373,38 +416,126 @@
       this.restore();
       document.execCommand(cmd, false, null);
       this.changed();
+      this.updateFormatState();
     }
 
-    wrap(cls) {
+    spanAt(node, cls) {
+      let n = node && node.nodeType === 3 ? node.parentElement : node;
+      const s = n && n.closest ? n.closest("span." + cls) : null;
+      return s && this.body.contains(s) ? s : null;
+    }
+
+    caretAt(node, offset) {
+      const r = document.createRange();
+      r.setStart(node, offset);
+      r.collapse(true);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+      this.lastRange = r.cloneRange();
+    }
+
+    // 빨간 글씨·형광펜 켜기/끄기
+    toggleSpan(cls) {
       this.body.focus();
       this.restore();
       const sel = window.getSelection();
-      if (!sel.rangeCount || sel.isCollapsed) return;
+      if (!sel.rangeCount) return;
       const r = sel.getRangeAt(0);
       if (!this.body.contains(r.commonAncestorContainer)) return;
-      const span = document.createElement("span");
-      span.className = cls;
-      span.append(r.extractContents());
-      r.insertNode(span);
-      sel.removeAllRanges();
-      const nr = document.createRange();
-      nr.selectNodeContents(span);
-      sel.addRange(nr);
-      this.changed();
-    }
+      const ZW = "​";
+      const hasText = (n) => (n.textContent || "").replace(/​/g, "").length > 0;
+      const unwrapIn = (root) => root.querySelectorAll && root.querySelectorAll("span." + cls).forEach((x) => x.replaceWith(...x.childNodes));
+      const startSpan = this.spanAt(r.startContainer, cls);
+      const endSpan = this.spanAt(r.endContainer, cls);
 
-    clearFormat() {
-      this.body.focus();
-      this.restore();
-      document.execCommand("removeFormat", false, null);
-      const sel = window.getSelection();
-      if (sel.rangeCount) {
-        const r = sel.getRangeAt(0);
-        this.body.querySelectorAll("span.em, span.hl").forEach((s) => {
-          if (r.intersectsNode(s)) s.replaceWith(...s.childNodes);
-        });
+      if (r.collapsed) {
+        if (startSpan) {
+          // 끄기: 커서 위치에서 서식 덩어리를 나누고, 커서를 바깥으로 뺀다
+          const right = document.createRange();
+          right.setStart(r.startContainer, r.startOffset);
+          right.setEnd(startSpan, startSpan.childNodes.length);
+          const rest = right.extractContents();
+          const z = document.createTextNode(ZW);
+          startSpan.after(z);
+          if (hasText(rest)) {
+            const ns = document.createElement("span");
+            ns.className = cls;
+            ns.append(rest);
+            z.after(ns);
+          }
+          if (!hasText(startSpan)) startSpan.remove();
+          this.caretAt(z, 1);
+        } else {
+          // 켜기: 이제부터 입력하는 글자에 서식이 붙는다
+          const s = document.createElement("span");
+          s.className = cls;
+          const z = document.createTextNode(ZW);
+          s.append(z);
+          r.insertNode(s);
+          this.caretAt(z, 1);
+        }
+      } else if (startSpan && startSpan === endSpan) {
+        // 끄기: 고른 부분만 서식을 벗긴다
+        const frag = r.extractContents();
+        unwrapIn(frag);
+        const right = document.createRange();
+        right.setStart(r.startContainer, r.startOffset);
+        right.setEnd(startSpan, startSpan.childNodes.length);
+        const rest = right.extractContents();
+        const nodes = [...frag.childNodes];
+        startSpan.after(frag);
+        const last = nodes[nodes.length - 1] || startSpan;
+        if (hasText(rest)) {
+          const ns = document.createElement("span");
+          ns.className = cls;
+          ns.append(rest);
+          last.after(ns);
+        }
+        if (!hasText(startSpan)) startSpan.remove();
+        if (nodes.length) {
+          const nr = document.createRange();
+          nr.setStartBefore(nodes[0]);
+          nr.setEndAfter(last);
+          sel.removeAllRanges();
+          sel.addRange(nr);
+          this.lastRange = nr.cloneRange();
+        }
+      } else {
+        // 켜기: 고른 부분 전체에 서식
+        const frag = r.extractContents();
+        unwrapIn(frag);
+        const s = document.createElement("span");
+        s.className = cls;
+        s.append(frag);
+        r.insertNode(s);
+        const nr = document.createRange();
+        nr.selectNodeContents(s);
+        sel.removeAllRanges();
+        sel.addRange(nr);
+        this.lastRange = nr.cloneRange();
       }
       this.changed();
+      this.updateFormatState();
+    }
+
+    updateFormatState() {
+      if (!this.fmtBtns) return;
+      const sel = window.getSelection();
+      const inside = sel.rangeCount && this.body.contains(sel.anchorNode);
+      const st = { bold: false, underline: false, em: false, hl: false };
+      if (inside) {
+        try {
+          st.bold = document.queryCommandState("bold");
+          st.underline = document.queryCommandState("underline");
+        } catch (e) {}
+        st.em = !!this.spanAt(sel.anchorNode, "em");
+        st.hl = !!this.spanAt(sel.anchorNode, "hl");
+      }
+      Object.entries(this.fmtBtns).forEach(([k, b]) => {
+        b.classList.toggle("on", st[k]);
+        b.setAttribute("aria-pressed", String(st[k]));
+      });
     }
 
     restore() {

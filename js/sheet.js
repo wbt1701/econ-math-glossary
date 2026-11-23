@@ -121,8 +121,7 @@
     c.terms.forEach((t, i) => {
       const term = el("div", "paper-term");
       const head = el("div", "paper-term-head");
-      head.append(document.createTextNode(`용어 ${"①②③"[i]} ${t.name.trim() || "(용어 이름 없음)"} `));
-      if (t.unit.trim()) head.append(el("small", null, `(${t.unit.trim()})`));
+      head.append(document.createTextNode(`용어 ${"①②③"[i]} ${t.name.trim() || "(용어 이름 없음)"}`));
       term.append(head);
       Sheet.TERM_ROWS.forEach((r) => {
         const row = el("div", "paper-row" + (r.key === "apply" ? " apply" : ""));

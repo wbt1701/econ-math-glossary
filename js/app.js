@@ -240,9 +240,7 @@
       term.innerHTML = `
         <div class="term-head">
           <span class="term-no">용어 ${"①②③"[i]}</span>
-          <input class="term-name" data-term="${i}" data-key="name" maxlength="40" placeholder="용어 이름 (예: 수요함수)" aria-label="용어 ${i + 1} 이름" />
-          <input class="term-unit" data-term="${i}" data-key="unit" maxlength="40" placeholder="단원 (예: II. 함수와 경제)" aria-label="용어 ${i + 1} 단원" />
-        </div>`;
+          <input class="term-name" data-term="${i}" data-key="name" maxlength="40" placeholder="용어 이름 (예: 수요함수)" aria-label="용어 ${i + 1} 이름" />        </div>`;
       Sheet.TERM_ROWS.forEach((r) => {
         const row = document.createElement("div");
         row.className = "term-row" + (r.key === "apply" ? " apply" : "");
