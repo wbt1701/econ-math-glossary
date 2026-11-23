@@ -39,9 +39,10 @@
 
   const ERR = {
     CLOSED: "지금은 접속 가능 시간이 아니에요.",
-    NAME_MISMATCH: "이 학번은 다른 이름으로 이미 입장했어요. 이름을 정확히 입력했는지 확인하고, 문제가 있으면 선생님께 말씀드리세요.",
+    NAME_MISMATCH: "이 학교·학번은 다른 이름으로 이미 입장했어요. 이름을 정확히 입력했는지 확인하고, 문제가 있으면 선생님께 말씀드리세요.",
     BAD_STUDENT_ID: "학번은 숫자 5자리로 입력해 주세요.",
     BAD_NAME: "이름을 1~20자로 입력해 주세요.",
+    BAD_SCHOOL: "학교 이름을 2~30자로 입력해 주세요. (예: 풍산고등학교)",
     SESSION_EXPIRED: "다른 기기(창)에서 같은 학번으로 입장해서 이 화면은 저장할 수 없어요. 다시 입장해 주세요.",
     TOO_LARGE: "내용이 너무 길어요. 표나 수식을 조금 줄여 주세요.",
     BAD_IMAGE: "사진을 올리지 못했어요. 다른 사진으로 해 보세요.",
@@ -155,26 +156,37 @@
       if ($("#view-entry").hidden) return clearInterval(entryTimer);
       paint();
     }, 1000);
-    setTimeout(() => $("#in-sid").focus(), 50);
+    setTimeout(() => ($("#in-school").value ? $("#in-sid") : $("#in-school")).focus(), 50);
   }
 
   $("#in-sid").addEventListener("input", (e) => {
     e.target.value = e.target.value.replace(/\D/g, "").slice(0, 5);
   });
 
+  // 학교명은 이 기기에서 마지막으로 쓴 값을 채워 둔다(편의 기능, 저장 실패해도 상관없음)
+  try {
+    const last = localStorage.getItem("emg.school");
+    if (last) $("#in-school").value = last;
+  } catch (e) {}
+
   $("#form-student").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const school = $("#in-school").value.replace(/\s+/g, "");
     const sid = $("#in-sid").value.trim();
     const name = $("#in-name").value.trim();
     const err = $("#err-student");
     err.textContent = "";
+    if (school.length < 2) return (err.textContent = ERR.BAD_SCHOOL), $("#in-school").focus();
     if (!/^\d{5}$/.test(sid)) return (err.textContent = ERR.BAD_STUDENT_ID), $("#in-sid").focus();
     if (!name) return (err.textContent = ERR.BAD_NAME), $("#in-name").focus();
     const btn = e.submitter || $("#form-student button");
     btn.disabled = true;
     try {
-      const data = await rpc("student_enter", { p_student_id: sid, p_name: name });
+      const data = await rpc("student_enter", { p_school: school, p_student_id: sid, p_name: name });
       store.set(LS_STUDENT, data.token);
+      try {
+        localStorage.setItem("emg.school", school);
+      } catch (e2) {}
       $("#in-name").value = "";
       startStudent(data);
     } catch (ex) {
@@ -263,8 +275,9 @@
     S.dirty = false;
     S.closed = false;
     buildTerms();
-    $("#st-who").textContent = `${S.sid} ${S.name}`;
-    $("#sheet-who").textContent = `학번 ${S.sid}   이름 ${S.name}`;
+    S.school = data.school || "";
+    $("#st-who").textContent = `${S.school ? S.school + " " : ""}${S.sid} ${S.name}`;
+    $("#sheet-who").textContent = `${S.school ? "학교 " + S.school + "   " : ""}학번 ${S.sid}   이름 ${S.name}`;
 
     S.editors = {};
     $$("#view-student .rte-slot").forEach((slot) => {
@@ -662,6 +675,12 @@
   function classOf(sid) {
     return `${sid[0]}학년 ${+sid.slice(1, 3)}반`;
   }
+  // 반 고르기 값: "학교|학번앞3자리"
+  const classKey = (s) => `${s.school || ""}|${s.student_id.slice(0, 3)}`;
+  function classLabel(key) {
+    const [school, pre] = key.split("|");
+    return `${school || "(학교 없음)"} ${classOf(pre)}`;
+  }
 
   function paintTeacher() {
     paintTiles();
@@ -673,8 +692,8 @@
 
     const sel = $("#sel-class");
     const cur = sel.value;
-    const classes = [...new Set(list.map((s) => s.student_id.slice(0, 3)))].sort();
-    sel.replaceChildren(new Option("전체", ""), ...classes.map((c) => new Option(classOf(c), c)));
+    const classes = [...new Set(list.map(classKey))].sort();
+    sel.replaceChildren(new Option("전체", ""), ...classes.map((c) => new Option(classLabel(c), c)));
     sel.value = classes.includes(cur) ? cur : "";
     paintRows();
   }
@@ -682,7 +701,9 @@
   function visibleStudents() {
     const c = $("#sel-class").value;
     const q = $("#in-search").value.trim();
-    return T.students.filter((s) => (!c || s.student_id.startsWith(c)) && (!q || s.student_id.includes(q) || s.name.includes(q)));
+    return T.students.filter(
+      (s) => (!c || classKey(s) === c) && (!q || s.student_id.includes(q) || s.name.includes(q) || (s.school || "").includes(q))
+    );
   }
 
   function paintRows() {
@@ -701,18 +722,19 @@
           : p.method === "writing"
           ? '<span class="badge writing">줄글</span>'
           : '<span class="badge">-</span>';
-      tr.innerHTML = `<td>${s.student_id}</td><td></td><td>${method} ${p.thinking ? "✓" : ""}</td>
+      tr.innerHTML = `<td></td><td>${s.student_id}</td><td></td><td>${method} ${p.thinking ? "✓" : ""}</td>
         <td>${dots(p.terms[0], p.named[0])}</td><td>${dots(p.terms[1], p.named[1])}</td><td>${dots(p.terms[2], p.named[2])}</td>
         <td>${s.updated_at ? Sheet.fmt(s.updated_at) : '<span class="muted">저장 전</span>'}</td>
         <td><div class="row-actions"><button class="btn btn-ghost btn-small" data-act="view">보기</button><button class="btn btn-primary btn-small" data-act="pdf">PDF</button></div></td>`;
-      tr.children[1].textContent = s.name;
+      tr.children[0].textContent = s.school || "-";
+      tr.children[2].textContent = s.name;
       tr.querySelector('[data-act="view"]').addEventListener("click", () => openView(s));
       tr.querySelector('[data-act="pdf"]').addEventListener("click", (e) => downloadOne(s, e.currentTarget));
       tb.append(tr);
     });
     if (T.students.length && !rows.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = '<td colspan="8" class="empty">조건에 맞는 학생이 없어요.</td>';
+      tr.innerHTML = '<td colspan="9" class="empty">조건에 맞는 학생이 없어요.</td>';
       tb.append(tr);
     }
   }
@@ -732,14 +754,14 @@
 
   async function imagesFor(s) {
     if (!s.image_count) return [];
-    return rpc("teacher_get_images", { p_token: T.token, p_student_id: s.student_id });
+    return rpc("teacher_get_images", { p_token: T.token, p_id: s.id });
   }
 
   async function openView(s) {
     T.viewing = s;
     const body = $("#view-body");
     body.innerHTML = '<p class="muted">불러오는 중…</p>';
-    $("#dlg-view-title").textContent = `${s.student_id} ${s.name}`;
+    $("#dlg-view-title").textContent = `${s.school ? s.school + " " : ""}${s.student_id} ${s.name}`;
     $("#dlg-view").showModal();
     try {
       const imgs = await imagesFor(s);
@@ -754,10 +776,10 @@
   $("#btn-view-delete").addEventListener("click", async () => {
     const s = T.viewing;
     if (!s) return;
-    const typed = prompt(`${s.student_id} ${s.name} 학생의 답안과 사진을 완전히 지웁니다. 되돌릴 수 없어요.\n지우려면 학번(${s.student_id})을 입력하세요.`);
+    const typed = prompt(`${s.school ? s.school + " " : ""}${s.student_id} ${s.name} 학생의 답안과 사진을 완전히 지웁니다. 되돌릴 수 없어요.\n지우려면 학번(${s.student_id})을 입력하세요.`);
     if (typed !== s.student_id) return;
     try {
-      await rpc("teacher_delete_student", { p_token: T.token, p_student_id: s.student_id });
+      await rpc("teacher_delete_student", { p_token: T.token, p_id: s.id });
       $("#dlg-view").close();
       toast("기록을 지웠어요.");
       loadTeacher(false);
@@ -818,7 +840,7 @@
     btn.disabled = true;
     btn.textContent = "준비 중…";
     try {
-      await printPapers([s], `${s.student_id}_${safeName(s.name)}_경제수학용어사전`);
+      await printPapers([s], `${s.school ? safeName(s.school) + "_" : ""}${s.student_id}_${safeName(s.name)}_경제수학용어사전`);
       toast("인쇄 창에서 대상을 'PDF로 저장'으로 고르세요.");
     } catch (ex) {
       if (!teacherFail(ex)) toast("PDF를 만들지 못했어요: " + ex.message, true);
@@ -837,7 +859,7 @@
     prog.hidden = false;
     try {
       const c = $("#sel-class").value;
-      const title = `경제수학용어사전_${c ? classOf(c).replace(/\s/g, "") : "전체"}_${list.length}명`;
+      const title = `경제수학용어사전_${c ? classLabel(c).replace(/\s/g, "") : "전체"}_${list.length}명`;
       await printPapers(list, title, (i, n) => (prog.textContent = `답안 모으는 중… ${i + 1} / ${n}`));
       toast("인쇄 창에서 대상을 'PDF로 저장'으로 고르세요. 학생마다 새 쪽에서 시작해요.");
     } catch (ex) {

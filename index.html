@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet" />
   <link href="https://spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/mathlive@0.98.6/dist/mathlive-static.css" rel="stylesheet" />
-  <link href="css/style.css?v=2" rel="stylesheet" />
+  <link href="css/style.css?v=3" rel="stylesheet" />
 </head>
 <body>
   <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -36,7 +36,11 @@
       <div class="entry-grid">
         <form class="card entry-card" id="form-student" autocomplete="off" novalidate>
           <h2>학생 입장</h2>
-          <p class="muted">학번 5자리와 이름을 입력하세요. 다시 들어올 때도 같은 학번·이름을 쓰면 이어서 작성할 수 있어요.</p>
+          <p class="muted">학교 이름, 학번 5자리, 이름을 입력하세요. 다시 들어올 때도 똑같이 입력하면 쓰던 답안을 이어서 고칠 수 있어요.</p>
+          <label class="field">
+            <span>학교 이름</span>
+            <input id="in-school" maxlength="30" placeholder="예: 풍산고등학교" required />
+          </label>
           <label class="field">
             <span>학번</span>
             <input id="in-sid" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="예: 10101" required />
@@ -176,7 +180,7 @@
         <div class="table-wrap">
           <table class="data-table">
             <thead>
-              <tr><th>학번</th><th>이름</th><th>생각열기</th><th>용어①</th><th>용어②</th><th>용어③</th><th>마지막 수정</th><th><span class="sr">작업</span></th></tr>
+              <tr><th>학교</th><th>학번</th><th>이름</th><th>생각열기</th><th>용어①</th><th>용어②</th><th>용어③</th><th>마지막 수정</th><th><span class="sr">작업</span></th></tr>
             </thead>
             <tbody id="t-rows"></tbody>
           </table>
@@ -247,9 +251,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathlive@0.98.6/dist/mathlive.min.js"></script>
-  <script src="config.js?v=2"></script>
-  <script src="js/editor.js?v=2"></script>
-  <script src="js/sheet.js?v=2"></script>
-  <script src="js/app.js?v=2"></script>
+  <script src="config.js?v=3"></script>
+  <script src="js/editor.js?v=3"></script>
+  <script src="js/sheet.js?v=3"></script>
+  <script src="js/app.js?v=3"></script>
 </body>
 </html>

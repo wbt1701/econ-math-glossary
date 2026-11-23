@@ -79,7 +79,7 @@
     const title = el("div", "paper-title");
     title.append(el("h1", null, "내가 만드는 경제수학 용어사전"));
     const who = el("div", "paper-who");
-    who.append(el("div", null, `학번 ${student.student_id}   이름 ${student.name}`));
+    who.append(el("div", null, `${student.school ? "학교 " + student.school + "   " : ""}학번 ${student.student_id}   이름 ${student.name}`));
     who.append(el("div", null, `마지막 수정 ${fmt(student.updated_at)}`));
     title.append(who);
     paper.append(title);
