@@ -328,7 +328,7 @@ math-field::part(virtual-keyboard-toggle) { display: none; }
   main { padding: 16px; }
   .topbar { padding: 10px 16px; }
   .entry-grid { grid-template-columns: repeat(2, 1fr); }
-  .guide-card { grid-column: 1 / -1; }
+  .teacher-entry { grid-column: 1 / -1; }
   .tiles { grid-template-columns: repeat(2, 1fr); }
   .window-form { grid-template-columns: 1fr 1fr; }
   .window-buttons { grid-column: 1 / -1; }

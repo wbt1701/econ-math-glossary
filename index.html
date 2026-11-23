@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet" />
   <link href="https://spoqa.github.io/spoqa-han-sans/css/SpoqaHanSansNeo.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/mathlive@0.98.6/dist/mathlive-static.css" rel="stylesheet" />
-  <link href="css/style.css?v=3" rel="stylesheet" />
+  <link href="css/style.css?v=4" rel="stylesheet" />
 </head>
 <body>
   <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -52,6 +52,15 @@
           <p class="form-error" id="err-student" role="alert"></p>
           <button class="btn btn-primary btn-block" type="submit">입장하기</button>
         </form>
+        <div class="card entry-card guide-card">
+          <h2>작성 안내</h2>
+          <ol class="guide-list">
+            <li><b>생각열기</b> — 네컷만화(사진 첨부) 또는 줄글 중 선택, 배운 용어 3개 이상 사용</li>
+            <li><b>용어사전</b> — 용어 3개마다 ① 정확한 의미 ② 수학적 표현 및 설명 ③ 상황 적용</li>
+            <li><b>수식·표</b> — 입력칸 위의 <span class="kbd">∑ 수식</span>, <span class="kbd">▦ 표</span> 버튼 사용</li>
+            <li>복사·붙여넣기는 막혀 있어요. 모든 글은 직접 입력합니다.</li>
+          </ol>
+        </div>
         <form class="card entry-card teacher-entry" id="form-teacher" autocomplete="off" novalidate>
           <h2>교사</h2>
           <p class="muted">비밀번호로 접속하면 접속 시간 설정, 답안 확인, PDF 저장을 할 수 있어요.</p>
@@ -62,15 +71,6 @@
           <p class="form-error" id="err-teacher" role="alert"></p>
           <button class="btn btn-ghost btn-block" type="submit">교사로 접속</button>
         </form>
-        <div class="card entry-card guide-card">
-          <h2>작성 안내</h2>
-          <ol class="guide-list">
-            <li><b>생각열기</b> — 네컷만화(사진 첨부) 또는 줄글 중 선택, 배운 용어 3개 이상 사용</li>
-            <li><b>용어사전</b> — 용어 3개마다 ① 정확한 의미 ② 수학적 표현 및 설명 ③ 상황 적용</li>
-            <li><b>수식·표</b> — 입력칸 위의 <span class="kbd">∑ 수식</span>, <span class="kbd">▦ 표</span> 버튼 사용</li>
-            <li>복사·붙여넣기는 막혀 있어요. 모든 글은 직접 입력합니다.</li>
-          </ol>
-        </div>
       </div>
     </section>
 
@@ -251,9 +251,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathlive@0.98.6/dist/mathlive.min.js"></script>
-  <script src="config.js?v=3"></script>
-  <script src="js/editor.js?v=3"></script>
-  <script src="js/sheet.js?v=3"></script>
-  <script src="js/app.js?v=3"></script>
+  <script src="config.js?v=4"></script>
+  <script src="js/editor.js?v=4"></script>
+  <script src="js/sheet.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
 </body>
 </html>
